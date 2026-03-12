@@ -4,7 +4,7 @@
 
 {
     "name": "Connector for E-Commerce",
-    "version": "17.0.1.0.0",
+    "version": "19.0.1.0.0",
     "category": "Hidden",
     "author": "Camptocamp,Akretion,Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/connector-ecommerce",
@@ -13,6 +13,7 @@
         "connector",
         "sale_automatic_workflow_payment_mode",
         "sale_exception",
+        "sale_stock",
         "delivery",
         "connector_base_product",
     ],

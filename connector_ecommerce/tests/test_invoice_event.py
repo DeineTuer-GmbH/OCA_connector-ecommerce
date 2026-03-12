@@ -4,20 +4,20 @@
 
 from unittest import mock
 
-import odoo.tests.common as common
+from odoo.tests import tagged
+
+from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
-class TestInvoiceEvent(common.TransactionCase):
+@tagged("post_install", "-at_install")
+class TestInvoiceEvent(AccountTestInvoicingCommon):
     """Test if the events on the invoice are fired correctly"""
 
     def setUp(self):
         super().setUp()
         self.invoice_model = self.env["account.move"]
-        partner_model = self.env["res.partner"]
-        partner = partner_model.create({"name": "Hodor"})
-        product = self.env.ref("product.product_product_6")
         invoice_vals = {
-            "partner_id": partner.id,
+            "partner_id": self.partner_a.id,
             "company_id": self.env.ref("base.main_company").id,
             "move_type": "out_invoice",
             "invoice_line_ids": [
@@ -26,23 +26,16 @@ class TestInvoiceEvent(common.TransactionCase):
                     0,
                     {
                         "name": "LCD Screen",
-                        "product_id": product.id,
+                        "product_id": self.product_a.id,
                         "quantity": 5,
                         "price_unit": 200,
+                        "tax_ids": False,
                     },
                 )
             ],
         }
-        self.invoice = self.invoice_model.create(invoice_vals)
+        self.invoice = self.invoice_model.sudo().create(invoice_vals)
         self.invoice._onchange_partner_id()
-
-        # self.invoice = self.invoice_model.create(
-        #     invoice._convert_to_write(invoice._cache)
-        # )
-        self.journal = self.env["account.journal"].search(
-            [("type", "=", "bank"), ("company_id", "=", self.env.company.id)],
-            limit=1,
-        )
 
     def test_event_validated(self):
         """Test if the ``on_invoice_validated`` event is fired
@@ -68,7 +61,8 @@ class TestInvoiceEvent(common.TransactionCase):
             register_payments = (
                 self.env["account.payment.register"]
                 .with_context(active_model="account.move", active_ids=self.invoice.ids)
-                .create({"journal_id": self.journal.id})
+                .sudo()
+                .create({})
             )
             register_payments._create_payments()
             self.assertEqual(self.invoice.payment_state, "paid")

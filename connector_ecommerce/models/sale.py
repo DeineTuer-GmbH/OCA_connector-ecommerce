@@ -5,7 +5,9 @@
 
 import logging
 
-from odoo import _, api, exceptions, fields, models, osv
+from odoo import api, fields, models
+from odoo.exceptions import UserError
+from odoo.fields import Domain
 
 _logger = logging.getLogger(__name__)
 
@@ -76,7 +78,7 @@ class SaleOrder(models.Model):
     # sale.order.parent_id cannot be searched.
     def _search_parent_id(self, operator, value):
         """Need to be inherited in the connectors to implement the parent logic."""
-        return [("id", "=", -1)]
+        return Domain("id", "=", -1)
 
     @api.depends("canceled_in_backend", "cancellation_resolved")
     def _compute_need_cancel(self):
@@ -113,7 +115,7 @@ class SaleOrder(models.Model):
 
         If it can't cancel it, does nothing.
         """
-        resolution_msg = _(
+        resolution_msg = self.env._(
             "<p>Resolution:<ol>"
             "<li>Cancel the linked invoices, delivery "
             "orders, automatic payments.</li>"
@@ -125,33 +127,34 @@ class SaleOrder(models.Model):
             if state == "cancel":
                 continue
             elif state == "done":
-                message = _(
+                message = self.env._(
                     "The sales order cannot be automatically "
                     'canceled because it is already in "Done" state.'
                 )
             else:
                 try:
                     order.action_cancel()
-                except (osv.osv.except_osv, osv.orm.except_orm, exceptions.Warning):
+                except UserError:
                     # the 'cancellation_resolved' flag will stay to False
                     message = (
-                        _("The sales order could not be automatically canceled.")
+                        self.env._(
+                            "The sales order could not be automatically canceled."
+                        )
                         + resolution_msg
                     )
                 else:
-                    message = _("The sales order has been automatically canceled.")
+                    message = self.env._(
+                        "The sales order has been automatically canceled."
+                    )
             order.message_post(body=message)
 
     def _log_canceled_in_backend(self):
-        message = _("The sales order has been canceled on the backend.")
+        message = self.env._("The sales order has been canceled on the backend.")
         self.message_post(body=message)
         for order in self:
-            message = (
-                _(
-                    "Warning: the origin sales order %s has been canceled "
-                    "on the backend."
-                )
-                % order.name
+            message = self.env._(
+                "Warning: the origin sales order %s has been canceled on the backend.",
+                order.name,
             )
             for picking in order.picking_ids:
                 picking.message_post(body=message)
@@ -188,12 +191,10 @@ class SaleOrder(models.Model):
         The user can choose to keep the sales order active for some reason,
         it only requires to push a button to keep it alive.
         """
-        message = (
-            _(
-                "Despite the cancellation of the sales order on the "
-                "backend, it should stay open.<br/><br/>Reason: %s"
-            )
-            % reason
+        message = self.env._(
+            "Despite the cancellation of the sales order on the "
+            "backend, it should stay open.<br/><br/>Reason: %s",
+            reason,
         )
         self.message_post(body=message)
         self.write({"cancellation_resolved": True})

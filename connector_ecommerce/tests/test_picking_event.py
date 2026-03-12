@@ -25,6 +25,21 @@ class TestPickingEvent(common.TransactionCase):
             pack_operation._convert_to_write(pack_operation._cache)
         )
 
+    def _get_demo_product(self, seq):
+        return self.env["product.product"].create(
+            [
+                {
+                    "name": f"Large Cabinet{seq}",
+                    "type": "consu",
+                    "default_code": f"E-COM_TEST{seq}",
+                    "standard_price": 800.0,
+                    "list_price": 320.0,
+                    "weight": 0.01,
+                    "uom_id": self.env.ref("uom.product_uom_unit").id,
+                }
+            ]
+        )
+
     def setUp(self):
         super().setUp()
         self.picking_model = self.env["stock.picking"]
@@ -33,8 +48,8 @@ class TestPickingEvent(common.TransactionCase):
 
         partner_model = self.env["res.partner"]
         partner = partner_model.create({"name": "Benjy"})
-        self.product_6 = self.env.ref("product.product_product_6")
-        self.product_7 = self.env.ref("product.product_product_7")
+        self.product_6 = self._get_demo_product(seq="6")
+        self.product_7 = self._get_demo_product(seq="7")
         self.sale = self.sale_model.create({"partner_id": partner.id})
         self.sale_line_model.create(
             {
@@ -42,7 +57,7 @@ class TestPickingEvent(common.TransactionCase):
                 "product_id": self.product_6.id,
                 "name": "Large Cabinet",
                 "product_uom_qty": 42,
-                "product_uom": self.env.ref("uom.product_uom_unit").id,
+                "product_uom_id": self.env.ref("uom.product_uom_unit").id,
                 "price_unit": 65,
             }
         )
@@ -52,7 +67,7 @@ class TestPickingEvent(common.TransactionCase):
                 "product_id": self.product_7.id,
                 "name": "Storage Box",
                 "product_uom_qty": 2,
-                "product_uom": self.env.ref("uom.product_uom_unit").id,
+                "product_uom_id": self.env.ref("uom.product_uom_unit").id,
                 "price_unit": 405,
             }
         )

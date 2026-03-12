@@ -41,5 +41,5 @@ class AccountPaymentMode(models.Model):
         domain = [("name", "=ilike", payment_method)]
         method = self.search(domain, limit=1)
         if not method:
-            method = self.create({"name": payment_method})
+            method = self.create([{"name": payment_method}])
         return method

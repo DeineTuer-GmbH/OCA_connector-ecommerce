@@ -10,7 +10,7 @@ from odoo.addons.component.core import ComponentRegistry
 
 from ..components.sale_order_onchange import OnChangeManager, SaleOrderOnChange
 
-DB = common.DB
+DB = common.get_db_name()
 ADMIN_USER_ID = common.ADMIN_USER_ID
 
 
